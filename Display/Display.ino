@@ -8,6 +8,9 @@ uint8_t buff[MAX_BUFF];                 // Criação de um Buffer para receber a
 
 const int receive_pin     = 11;         // Pino usado para o RX
 
+// Variaveis de inatividade
+unsigned long int time2reset = 0;
+bool              flag2reset = 0;
 
 // Para usar o Display LCD
 #include <LiquidCrystal.h>
@@ -20,7 +23,7 @@ const int receive_pin     = 11;         // Pino usado para o RX
 /*  LCD D7 pin to digital pin 4          // Dados 4 
 /*  LCD RW pin to ground                 // Read(1) ou Write(0)  
  */
-const int RS=8, EN=9, D4=7, D5=6, D6=5, D7=4;
+const int RS=9, EN=8, D4=7, D5=6, D6=5, D7=4;
 
 // Inicia a interface do display LCD com os pinos
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
@@ -41,27 +44,25 @@ uint8_t *Hor    = &buff[3];
 
 
 void setup() {
-  
-  // Para ligar o Gnd e Vcc do Receptor nos pinos 10 e 13 
-  pinMode(10, OUTPUT);
+
+  // Para ligar o Vcc do Receptor nos pinos 13 
   pinMode(13, OUTPUT);
-  digitalWrite(10, LOW );
   digitalWrite(13, HIGH);
-  
+
+
   // Controle de luzes
   pinMode(VERM, OUTPUT);
   pinMode(VERD, OUTPUT);
   pinMode(AZUL, OUTPUT);
   pinMode(CONT, OUTPUT);
-  
+
+
   // Evitar queimar o LED
   analogWrite(CONT, LOW);
-  
-  piscaCores();
 
   // Potenciometro para o LCD
   pinMode(A0, OUTPUT);
-  analogWrite(A0,120);
+  analogWrite(A0, 120);
 
   // Setando as configurações do LCD * 16 colunas 2 linhas
   lcd.begin(16, 2);
@@ -72,88 +73,115 @@ void setup() {
   lcd.setCursor(0,1);
   lcd.print("Pronto para uso");
 
+
   //Iniciar as configurações de transmissão e recepção RF
   vw_set_rx_pin(receive_pin);         // Pino de Recepção RF
   vw_setup(2000);                     // Bits por segundo
 
-  delay(1000);
-
   vw_rx_start();                      // Inicia a recepção de dados RX (Receive)
+  delay(500);
+
+  piscaCores(100);
 }
 
 
 void loop() {
 
   // Espera nova mensagem por 1 segundo (1000 milissegundos);
-  vw_wait_rx_max(1000);
+  vw_wait_rx_max(100);
+
   // Recebe a mensagem no Buff e o tamanho BuffLen
-  if (vw_get_message(buff, &buff_len)){
+  if(vw_have_message()){
+    if (vw_get_message(buff, &buff_len)){
 
-    lcd.clear();            // Limpa a tela antes de nova escrita
-    lcd.setCursor(0, 0);    // Setar a posição de escrita no LCD 
-    lcd.print("L/min:");    // Printar a dimensão 
+      lcd.clear();            // Limpa a tela antes de nova escrita
+      lcd.setCursor(0, 0);    // Setar a posição de escrita no LCD 
+      lcd.print("L/min:");    // Printar a dimensão 
 
-    lcd.setCursor(0, 9);                     // Seta a posição de escrita no LCD
-    lcd.print((int)pulsos*100/75);
+      lcd.setCursor(12, 0);       // Seta a posição de escrita no LCD
+      float vazao = *pulsos/7.5;
 
-    // Printar o tempo na coluna 2 
-    lcd.setCursor(0,1);
-    lcd.print((int)Hor);
-    lcd.setCursor(3,1);
-    lcd.print(":");
-    lcd.setCursor(4,1);
-    lcd.print((int)Min);
-    lcd.setCursor(7,1);
-    lcd.print(":");
-    lcd.setCursor(8,1);
-    lcd.print((int)Seg);    
+      lcd.print(vazao);
+      printTempo();
 
+
+    }
+    else{
+      //RECEBENDO SINAL ERRADO, FAZER AS MEDIAS E CONTORNAR
+      piscadela(1,0,0,100);
+      Seg>60 ? Seg=0 : Seg++;
+      printTempo();
+
+    }
+    flag2reset = false;
+    time2reset = 0;
+
+  }else{
+    piscadela(1,0,0,100);
+    if(!flag2reset)
+      time2reset = millis();
+    flag2reset = true;
+    if(millis()-time2reset>600000)        // Se o tempo inativo for maior que 10 minutos
+      asm volatile ("jmp 0");             // RESETO O ARDUINO
   }
-  else{
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("Sistema nao esta");
-    lcd.setCursor(1,1);
-    lcd.print("Rcebendo sinal");
-  }
 
-  delay(990);
+  delay(1);
 }
 
 
 void controleCores(bool verm, bool verd, bool azul){
-  
-  analogWrite(CONT, 0);  
   verm ? analogWrite(VERM, 130 ) : analogWrite(VERM, 0 );
-  verd ? analogWrite(VERD, 150 ) : analogWrite(VERD, 0 );
-  azul ? analogWrite(AZUL, 150 ) : analogWrite(AZUL, 0 );
-
+  verd ? analogWrite(VERD, 130 ) : analogWrite(VERD, 0 );
+  azul ? analogWrite(AZUL, 130 ) : analogWrite(AZUL, 0 );
 }
 
-
-void piscaCores(){
+void piscaCores(int tempo){
   controleCores(1,0,0);
-  delay(300);
+  delay(tempo);
   controleCores(0,1,0);
-  delay(300);
+  delay(tempo);
   controleCores(0,0,1);
-  delay(300);
+  delay(tempo);
   controleCores(1,1,0);
-  delay(300);
+  delay(tempo);
   controleCores(0,1,1);
-  delay(300);
+  delay(tempo);
   controleCores(1,0,1);
-  delay(300);
+  delay(tempo);
   controleCores(1,1,1);
-  delay(300);
+  delay(tempo);
   controleCores(0,0,0);
 }
 
+void piscadela(bool um, bool dois, bool tres, int tempo){
+  controleCores(um,dois,tres);
+  delay(tempo);
+  controleCores(0,0,0);
+}
 
+void lcd_print(int num){
+  if (num<10){
+    lcd.print("0");
+    lcd.print(num);
+  }
+  else{
+    lcd.print(num);
+  }
+}
 
-
-
-
-
-
-
+void printTempo(){
+  // Printar o tempo na coluna 2 
+  lcd.setCursor(0,1);
+  lcd.print("Tempo:");
+  lcd.setCursor(8,1);
+  lcd_print((int)*Hor);
+  lcd.setCursor(10,1);
+  lcd.print(":");
+  lcd.setCursor(11,1);
+  lcd_print((int)*Min);
+  lcd.setCursor(13,1);
+  lcd.print(":");
+  lcd.setCursor(14,1);
+  lcd_print((int)*Seg); 
+  piscadela(0,1,0,100);
+}
