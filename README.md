@@ -1,4 +1,4 @@
-# Monitoramento de chuveiros com arduino e comunicação RF
+# Monitoramento do consumo de água em chuveiros com arduino e comunicação RF
 
   Com as crescentes noticias a cerca do uso de forma inadequada da água, uma das preocupações de toda comunidade científica e industrial mais conscientes, está sobre como reduzir o consumo de água através da conscientização das pessoas e criação de aparelhos que consigam economizar os recursos hídricos. Como forma de conscientização a Organização das Nações Unidas (ONU) criou no dia 22 de março de 1992, o Dia Mundial da Água, divulgando a Declaração Universal dos Direitos da Água, entretanto, pouca coisa mudou de lá para cá, pois, as pessoas não tem consciência de quantos litros de água elas gastam por dia e de que forma elas gastam esses recursos.
 
