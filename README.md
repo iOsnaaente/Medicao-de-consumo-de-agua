@@ -5,8 +5,16 @@
   Como forma de conscientização, nesse projeto será proposto a criação de um dispositivo que meça o volume de água gasto durante um banho e, que assim, a pessoa que esteja fazendo o uso do chuveiro, possa acompanhar esse consumo durante o processo. Acredita-se que com a visualização do volume total de água gasto durante um banho, o usuário tome consciência de quantos litros de água ele está desperdiçando, muitas vezes com coisas desnecessárias, e assim, o seu tempo de banho seja reduzido, economizando água consequentemente.
 
   Sabe-se da importância da conscientização a respeito do uso da água e é necessário ter-se os órgãos de apoio ao nosso lado nessa luta, para que se consiga, com sabedoria, usar a água plenamente e assim deixar-se um bom legado para as futuras gerações. Com cada um fazendo a sua parte e economizando, na medida do possível, conseguiremos manter um mundo mais saudável e sem o medo de como será no futuro, tudo graças a tecnologia. A água é um bem de todos e deve ser respeitada. 
+
+
  
- # Montagem
+# Montagem
+
+Iamgem do projeto de Receptor
+![alt text](https://github.com/iOsnaaente/Medicao-de-consumo-de-agua/blob/master/Imagens/Receptor_%20(2).jpeg)
+
+Imagem do projeto de Transmissor
+![alt text](https://github.com/iOsnaaente/Medicao-de-consumo-de-agua/blob/master/Imagens/Transmissor_%20(2).jpeg)
  
  Para saber mais de como foi montado o sistema, visualize o doc.pdf disponível a cima.
  
