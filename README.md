@@ -10,7 +10,7 @@
  
 # Montagem
 
-Iamgem do projeto de Receptor
+Imagem do projeto de Receptor
 ![alt text](https://github.com/iOsnaaente/Medicao-de-consumo-de-agua/blob/master/Imagens/Receptor_%20(2).jpeg)
 
 Imagem do projeto de Transmissor
