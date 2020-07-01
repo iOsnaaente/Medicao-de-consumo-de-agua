@@ -42,6 +42,16 @@ uint8_t *Seg    = &buff[1];
 uint8_t *Min    = &buff[2];
 uint8_t *Hor    = &buff[3];
 
+// Botão de controle de menu 
+const int BOTAO1 = 2;
+const int BOTAO2 = 3;
+int       menu   = 0;
+
+// Variáveis importantes para a medição
+float vazao      = 0.0;
+float miliLitros = 0.0;
+float Litros     = 0.0;
+
 
 void setup() {
 
@@ -49,13 +59,11 @@ void setup() {
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
 
-
   // Controle de luzes
   pinMode(VERM, OUTPUT);
   pinMode(VERD, OUTPUT);
   pinMode(AZUL, OUTPUT);
   pinMode(CONT, OUTPUT);
-
 
   // Evitar queimar o LED
   analogWrite(CONT, LOW);
@@ -73,59 +81,98 @@ void setup() {
   lcd.setCursor(0,1);
   lcd.print("Pronto para uso");
 
+  // Define os botões com interrupção 
+  // Controle de menu
+  pinMode(BOTAO1, INPUT_PULLUP);
+  attachInterrupt(0, incMenu, RISING);
+  // Reseta mediço
+  pinMode(BOTAO2, INPUT_PULLUP);
+  attachInterrupt(1, reset, RISING);
 
   //Iniciar as configurações de transmissão e recepção RF
   vw_set_rx_pin(receive_pin);         // Pino de Recepção RF
   vw_setup(2000);                     // Bits por segundo
-
   vw_rx_start();                      // Inicia a recepção de dados RX (Receive)
-  delay(500);
 
+  // Sinalização de inicialização
   piscaCores(100);
 }
 
 
 void loop() {
-
+  
   // Espera nova mensagem por 1 segundo (1000 milissegundos);
-  vw_wait_rx_max(100);
+  vw_wait_rx_max(1000);
 
   // Recebe a mensagem no Buff e o tamanho BuffLen
   if(vw_have_message()){
     if (vw_get_message(buff, &buff_len)){
 
-      lcd.clear();            // Limpa a tela antes de nova escrita
-      lcd.setCursor(0, 0);    // Setar a posição de escrita no LCD 
-      lcd.print("L/min:");    // Printar a dimensão 
+      vazao = *pulsos/7.5;
+      miliLitros = vazao / 60;
+      Litros += miliLitros;
 
-      lcd.setCursor(12, 0);       // Seta a posição de escrita no LCD
-      float vazao = *pulsos/7.5;
+      if (menu == 0){ 
+        lcd.clear();            // Limpa a tela antes de nova escrita
+        lcd.setCursor(0, 0);    // Setar a posição de escrita no LCD 
+        lcd.print("L/min:");    // Printar a dimensão 
+        lcd.setCursor(12, 0);       // Seta a posição de escrita no LCD
+        lcd.print(vazao);
+        printTempo();
 
-      lcd.print(vazao);
-      printTempo();
-
-
+      }
+      else if (menu == 1){
+        lcd.clear();            // Limpa a tela antes de nova escrita
+        lcd.setCursor(0, 0);    // Setar a posição de escrita no LCD 
+        lcd.print("Litros:");    // Printar a dimensão 
+        lcd.setCursor(12, 0);       // Seta a posição de escrita no LCD
+        lcd.print(Litros);
+        printTempo();  
+      }
+      else{
+        lcd.clear();
+      }
     }
+
     else{
       //RECEBENDO SINAL ERRADO, FAZER AS MEDIAS E CONTORNAR
       piscadela(1,0,0,100);
-      Seg>60 ? Seg=0 : Seg++;
+      *Seg>60 ? *Seg=0 : *Seg++;
       printTempo();
-
     }
+
     flag2reset = false;
     time2reset = 0;
 
-  }else{
-    piscadela(1,0,0,100);
+  }
+  else{
+    piscadela(1,0,1,100);
+    // Não esta recebendo sinal - sinaliza 
     if(!flag2reset)
       time2reset = millis();
     flag2reset = true;
-    if(millis()-time2reset>600000)        // Se o tempo inativo for maior que 10 minutos
-      asm volatile ("jmp 0");             // RESETO O ARDUINO
+
+    // Se o tempo inativo for maior que 10 minutos - desliga
+    if(millis()-time2reset>600000)        
+      lcd.clear();
+    Litros = 0;
   }
 
   delay(1);
+}
+
+/*  Definem os 3 estados de menu
+ 0 = Vazão [litros / minuto]
+ 1 = Litros 
+ 2 = Menu desligado
+ */
+void incMenu(){
+  menu == 3 ? menu = 0 : menu++ ;
+}
+
+
+void reset(){
+  Litros = 0 ;
 }
 
 
@@ -136,21 +183,15 @@ void controleCores(bool verm, bool verd, bool azul){
 }
 
 void piscaCores(int tempo){
-  controleCores(1,0,0);
-  delay(tempo);
-  controleCores(0,1,0);
-  delay(tempo);
-  controleCores(0,0,1);
-  delay(tempo);
-  controleCores(1,1,0);
-  delay(tempo);
-  controleCores(0,1,1);
-  delay(tempo);
-  controleCores(1,0,1);
-  delay(tempo);
-  controleCores(1,1,1);
-  delay(tempo);
-  controleCores(0,0,0);
+  byte control = 1;
+  for (int i =0; i<8; i++){
+    bool byte1 = control & 1;
+    bool byte2 = control & 2;
+    bool byte3 = control & 4;
+    controleCores(byte1,byte2,byte3);
+    delay(tempo);
+    control++;
+  }
 }
 
 void piscadela(bool um, bool dois, bool tres, int tempo){
@@ -182,6 +223,7 @@ void printTempo(){
   lcd.setCursor(13,1);
   lcd.print(":");
   lcd.setCursor(14,1);
-  lcd_print((int)*Seg); 
+  lcd_print((int)buff[1]); 
   piscadela(0,1,0,100);
 }
+
