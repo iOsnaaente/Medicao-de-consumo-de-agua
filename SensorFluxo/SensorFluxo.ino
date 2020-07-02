@@ -53,7 +53,10 @@ void loop() {
   //PCMSK2 |= (1 << PCINT18);           // Habilita interrupção do port D (0x6D)
   delay (1000 - TempoCompensado);       // Aguarda 1 segundo - tempo de looping
   //PCMSK2 |= (0 << PCINT18);           // Desabilita interrupção do port D
-    
+  
+  // PROVISRIO PARA TESTES
+  contaPulso = map(analogRead(A3), 0, 1023, 0, 75);  
+  
   
   // Variavel de sincronia 
   Tempo_1 = millis();
@@ -81,6 +84,7 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
     vw_send((uint8_t *)mensagem, sizeof(mensagem));
     vw_wait_tx();
+    for(int i=0; i<sizeof(mensagem); i++)
     digitalWrite(LED_BUILTIN, LOW);
   }
   
@@ -105,7 +109,7 @@ void controle2reset(){
       Time2Reset   = millis();
       flag2reset   = true;
     }
-    if (millis() - Time2Reset > 600000)   // 10 minutos
+    if (millis() - Time2Reset > 6000)   // 10 minutos
       Seg = Min = Hor = 0;
   
   }else{
