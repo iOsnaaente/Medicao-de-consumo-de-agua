@@ -84,10 +84,10 @@ void setup() {
   // Define os botões com interrupção 
   // Controle de menu
   pinMode(BOTAO1, INPUT_PULLUP);
-  attachInterrupt(0, incMenu, RISING);
+  attachInterrupt(0, incMenu, FALLING);
   // Reseta mediço
   pinMode(BOTAO2, INPUT_PULLUP);
-  attachInterrupt(1, reset, RISING);
+  attachInterrupt(1, reset, FALLING);
 
   //Iniciar as configurações de transmissão e recepção RF
   vw_set_rx_pin(receive_pin);         // Pino de Recepção RF
@@ -153,7 +153,7 @@ void loop() {
     flag2reset = true;
 
     // Se o tempo inativo for maior que 10 minutos - desliga
-    if(millis()-time2reset>600000)        
+    if(millis()-time2reset>6000)        
       lcd.clear();
     Litros = 0;
   }
@@ -167,7 +167,8 @@ void loop() {
  2 = Menu desligado
  */
 void incMenu(){
-  menu == 3 ? menu = 0 : menu++ ;
+  menu == 2 ? menu = 0 : menu++ ;
+  delay(10);
 }
 
 
